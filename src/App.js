@@ -1,9 +1,15 @@
 import React from "react";
 
-import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
-import { useState } from "react";
+import {
+  useJsApiLoader,
+  GoogleMap,
+  Marker,
+  Autocomplete,
+  DirectionsRenderer,
+} from "@react-google-maps/api";
+import { useState, useRef } from "react";
 
-const center = { lat: 41.8818, lng: -87.623 };
+const center = { lat: 41.902782, lng: 12.496366 };
 
 function App() {
   const { isLoaded } = useJsApiLoader({
@@ -12,11 +18,29 @@ function App() {
   });
 
   const [map, setMap] = useState(/** @type google.maps.Map */ (null));
-
-  /** @type React.MutableRefObject<HTMLInputElement> */
+  const [directionsResponse, setDirectionsResponse] = useState(null);
+  const originRef = useRef();
+  const destinationRef = useRef();
   if (!isLoaded) {
     return <div>ne radi</div>;
   }
+
+  async function findRoute() {
+    if (originRef.current.value === "" || destinationRef.current.value === "") {
+      return;
+    }
+    // eslint-disable-next-line no-undef
+    const directionsService = new google.maps.DirectionsService();
+    const results = await directionsService.route({
+      origin: originRef.current.value,
+      destination: destinationRef.current.value,
+
+      // eslint-disable-next-line no-undef
+      travelMode: google.maps.TravelMode.DRIVING,
+    });
+    setDirectionsResponse(results);
+  }
+
   return (
     <div
       style={{
@@ -38,7 +62,7 @@ function App() {
       >
         <GoogleMap
           center={center}
-          zoom={15}
+          zoom={5}
           mapContainerStyle={{ width: "100%", height: "100%" }}
           options={{
             zoomControl: false,
@@ -46,10 +70,42 @@ function App() {
             mapTypeControl: false,
             fullscreenControl: false,
           }}
-          onLoad={(map) => setMap(map)}
+          onLoad={(map) => {
+            setMap(map);
+          }}
         >
           <Marker position={center} />
+          {directionsResponse && ( 
+            <DirectionsRenderer directions={directionsResponse} />
+          )}
         </GoogleMap>
+      </div>
+      <div
+        style={{
+          backgroundColor: "white",
+          zIndex: 100,
+          position: "relative",
+        }}
+      >
+        <div>
+          <div>
+            <Autocomplete>
+              <input type="text" placeholder="Origin" ref={originRef} />
+            </Autocomplete>
+          </div>
+
+          <div>
+            <Autocomplete>
+              <input type="text" placeholder="Destination" ref={destinationRef} />
+            </Autocomplete>
+          </div>
+          <div>
+            <button onClick={findRoute}>Find Route</button>
+          </div>
+        </div>
+        <div>
+          <button onClick={() => { map.panTo(center); map.setZoom(5);}}>Center Back</button>
+        </div>
       </div>
     </div>
   );
