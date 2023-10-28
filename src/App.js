@@ -1,5 +1,5 @@
 import React from "react";
-
+import "./App.css";
 import {
   useJsApiLoader,
   GoogleMap,
@@ -17,11 +17,12 @@ function App() {
     libraries: ["places"],
   });
 
+  const [isDivVisible, setDivVisible] = useState(true);
   const [map, setMap] = useState(/** @type google.maps.Map */ (null));
   const [directionsResponse, setDirectionsResponse] = useState(null);
   const [stop, setStop] = useState([{ value: "" }]);
   const [stops, setStops] = useState([]);
-  const [stopsArray, setStopsArray]=useState([]);
+  const [stopsArray, setStopsArray] = useState([]);
   const stopRef = useRef();
   const originRef = useRef();
   const destinationRef = useRef();
@@ -49,30 +50,43 @@ function App() {
       travelMode: google.maps.TravelMode.DRIVING,
     });
     setDirectionsResponse(results);
+    setDivVisible(!isDivVisible);
   }
   const handleAddStop = () => {
     setStops([...stops, ""]);
   };
+  const toggleDivVisibility = () => {
+    setDivVisible(!isDivVisible);
+  };
   function customAutocomplete(input, index) {
     const autocomplete = new window.google.maps.places.Autocomplete(input);
-  
-    autocomplete.addListener('place_changed', () => {
+
+    autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
       const updatedArray = [...stopsArray, place.formatted_address];
-      console.log(`Selected place for Stop ${index + 1}: ${place.formatted_address}`);
-  
+      console.log(
+        `Selected place for Stop ${index + 1}: ${place.formatted_address}`
+      );
+
       // Update state with the new array containing the selected place
       setStopsArray(updatedArray);
     });
   }
+  function clearRoute() {
+    setDirectionsResponse(null);
+    originRef.current.value = "";
+    destinationRef.current.value = "";
+    setStops([]);
+    setStopsArray([]);
+  }
+
   return (
     <div
       style={{
         position: "relative",
-        flexDirection: "column",
-        alignItems: "center",
         height: "100vh",
         width: "100vw",
+        paddingTop: "2rem",
       }}
     >
       <div
@@ -99,38 +113,45 @@ function App() {
           }}
         >
           <Marker position={center} />
-          {directionsResponse && ( 
+          {directionsResponse && (
             <DirectionsRenderer directions={directionsResponse} />
           )}
         </GoogleMap>
       </div>
-      <div
-        style={{
-          backgroundColor: "white",
-          zIndex: 100,
-          position: "relative",
-        }}
-      >
+      <div>      
+        <button style={{ zIndex:100, position: "relative" }} className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1 px-2 w-20 rounded mt-2" onClick={toggleDivVisibility}>Hide</button>
+        {isDivVisible && <div className="responsive-div">
         <div>
+      
+          </div> 
           <div>
             <Autocomplete>
-              <input type="text" placeholder="Origin" ref={originRef} />
+              <input
+                className="lg:p-1 lg:w-100 lg:border lg:rounded-md"
+                type="text"
+                placeholder="Origin"
+                ref={originRef}
+              />
             </Autocomplete>
           </div>
 
           <div>
             <Autocomplete>
-              <input type="text" placeholder="Destination" ref={destinationRef} />
+              <input
+                className="lg:p-1 lg:w-100 lg:border lg:rounded-md mt-4"
+                type="text"
+                placeholder="Destination"
+                
+                ref={destinationRef}
+              />
             </Autocomplete>
           </div>
-          <div>
-            <button onClick={findRoute}>Find Route</button>
-          </div>
-          <button onClick={handleAddStop}>Add stop</button>
+         
           {stops.map((stop, index) => (
             <div key={index}>
               <div style={{ flexGrow: 1 }}>
                 <input
+                className="lg:p-1 lg:w-100 lg:border lg:rounded-md mt-4"
                   type="text"
                   placeholder={`Stop ${index + 1}`}
                   ref={(input) => customAutocomplete(input, index)}
@@ -138,11 +159,24 @@ function App() {
               </div>
             </div>
           ))}
+         <div>
+            <button  className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-1 px-2 w-100 rounded mt-2"  onClick={handleAddStop}>Add stop</button>
+          </div> 
+          <div>
+            <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-2 w-100 rounded mt-2" onClick={findRoute}>Find Route</button>
+          </div>
+        
+          <div class="flex justify-between mt-20">
+  <div>
+    <button class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded" onClick={clearRoute}>Clear Route</button>
+  </div>
+  <div>
+    <button class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded" onClick={() => { map.panTo(center); map.setZoom(5); }}>Center Back</button>
+  </div>
+</div>
 
-        </div>
-        <div>
-          <button onClick={() => { map.panTo(center); map.setZoom(5);}}>Center Back</button>
-        </div>
+        </div>}
+        
       </div>
     </div>
   );
