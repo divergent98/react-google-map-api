@@ -19,12 +19,21 @@ function App() {
 
   const [map, setMap] = useState(/** @type google.maps.Map */ (null));
   const [directionsResponse, setDirectionsResponse] = useState(null);
+  const [stop, setStop] = useState([{ value: "" }]);
+  const [stops, setStops] = useState([]);
+  const [stopsArray, setStopsArray]=useState([]);
+  const stopRef = useRef();
   const originRef = useRef();
   const destinationRef = useRef();
   if (!isLoaded) {
     return <div>ne radi</div>;
   }
-
+  const waypoints = stopsArray.map((stop) => {
+    return {
+      location: stop,
+      stopover: true,
+    };
+  });
   async function findRoute() {
     if (originRef.current.value === "" || destinationRef.current.value === "") {
       return;
@@ -34,13 +43,28 @@ function App() {
     const results = await directionsService.route({
       origin: originRef.current.value,
       destination: destinationRef.current.value,
+      waypoints: waypoints,
 
       // eslint-disable-next-line no-undef
       travelMode: google.maps.TravelMode.DRIVING,
     });
     setDirectionsResponse(results);
   }
-
+  const handleAddStop = () => {
+    setStops([...stops, ""]);
+  };
+  function customAutocomplete(input, index) {
+    const autocomplete = new window.google.maps.places.Autocomplete(input);
+  
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      const updatedArray = [...stopsArray, place.formatted_address];
+      console.log(`Selected place for Stop ${index + 1}: ${place.formatted_address}`);
+  
+      // Update state with the new array containing the selected place
+      setStopsArray(updatedArray);
+    });
+  }
   return (
     <div
       style={{
@@ -102,6 +126,19 @@ function App() {
           <div>
             <button onClick={findRoute}>Find Route</button>
           </div>
+          <button onClick={handleAddStop}>Add stop</button>
+          {stops.map((stop, index) => (
+            <div key={index}>
+              <div style={{ flexGrow: 1 }}>
+                <input
+                  type="text"
+                  placeholder={`Stop ${index + 1}`}
+                  ref={(input) => customAutocomplete(input, index)}
+                />
+              </div>
+            </div>
+          ))}
+
         </div>
         <div>
           <button onClick={() => { map.panTo(center); map.setZoom(5);}}>Center Back</button>
