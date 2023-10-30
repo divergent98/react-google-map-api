@@ -14,11 +14,27 @@
   z-index: 100;
   position: relative;
   border-radius: 7px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
   /*box shadow add*/
+}
+.responsive-div.show{
+  opacity: 1;
+}
+.custom-hide-button{
+  margin-left: 3rem;
+  padding: 1rem 1.3rem;
+  background-color: #3B82F6;
+  border-radius: 50%;
+  margin-bottom:1rem;
+  color: #fff;
 }
 @media (max-width: 750px) {
   .responsive-div {
     width: 90%; 
     margin: auto;
+  }
+  .custom-hide-button{
+    margin-left: 1rem;
   }
 }
